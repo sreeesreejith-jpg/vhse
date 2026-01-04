@@ -40,6 +40,7 @@
                 path.endsWith('/nithara/index.html') ||
                 path === '/' ||
                 path === '/index.html' ||
+                path.includes('index.html') && !path.includes('pay-revision') && !path.includes('salary') && !path.includes('dcrg') && !path.includes('emi') && !path.includes('sip') && !path.includes('housing') && !path.includes('calculator') ||
                 // Handling local file system paths often used in dev/debug APKs
                 path.endsWith('/www/index.html');
 
