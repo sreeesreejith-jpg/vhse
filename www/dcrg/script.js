@@ -12,6 +12,84 @@ document.addEventListener('DOMContentLoaded', () => {
     // Display elements
     const pensionAmountDisplay = document.getElementById('pensionAmount');
     const drAmountDisplay = document.getElementById('drAmount');
+
+    // Global variable to store stages
+    let payStagesList = [];
+
+    // Fetch and populate Pay Stages
+    fetch('../data/pay_stages.json')
+        .then(response => response.json())
+        .then(data => {
+            const dataList = document.getElementById('pay-stages');
+            if (dataList && data.payStages) {
+                payStagesList = data.payStages;
+                data.payStages.forEach(stage => {
+                    const option = document.createElement('option');
+                    option.value = stage;
+                    dataList.appendChild(option);
+                });
+            }
+        })
+        .catch(err => console.error('Error loading pay stages:', err));
+
+    // Smart Navigation & Auto-List Logic for DCRG Basic Pay
+    basicPayInput.dataset.lastValid = basicPayInput.value || "60700";
+
+    function activateGhostMode() {
+        if (this.value.trim() !== "") {
+            this.dataset.lastValid = this.value;
+            this.placeholder = this.value;
+            this.value = '';
+        }
+    }
+
+    function deactivateGhostMode() {
+        if (this.value.trim() === "") {
+            this.value = this.dataset.lastValid;
+        } else {
+            this.dataset.lastValid = this.value;
+        }
+        this.dispatchEvent(new Event('input'));
+    }
+
+    basicPayInput.addEventListener('focus', activateGhostMode);
+    basicPayInput.addEventListener('click', activateGhostMode);
+    basicPayInput.addEventListener('blur', deactivateGhostMode);
+
+    basicPayInput.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+            if (payStagesList.length === 0) return;
+
+            e.preventDefault();
+
+            let currentValStr = this.value;
+            if (currentValStr === '') {
+                currentValStr = this.dataset.lastValid || "0";
+            }
+
+            const currentVal = parseInt(currentValStr) || 0;
+
+            let currentIndex = payStagesList.indexOf(currentVal);
+
+            if (currentIndex === -1) {
+                currentIndex = payStagesList.findIndex(val => val >= currentVal);
+                if (currentIndex === -1) currentIndex = payStagesList.length - 1;
+            }
+
+            let nextIndex = currentIndex;
+            if (e.key === 'ArrowUp') {
+                nextIndex = currentIndex + 1;
+            } else {
+                nextIndex = currentIndex - 1;
+            }
+
+            if (nextIndex >= 0 && nextIndex < payStagesList.length) {
+                this.value = payStagesList[nextIndex];
+                this.dataset.lastValid = this.value;
+                this.dispatchEvent(new Event('input'));
+            }
+        }
+    });
     const totalMonthlyPensionDisplay = document.getElementById('totalMonthlyPension');
     const commutationAmountDisplay = document.getElementById('commutationAmount');
     const balancePensionDisplay = document.getElementById('balancePension');

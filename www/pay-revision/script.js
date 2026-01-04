@@ -9,7 +9,97 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     inputs.forEach(id => {
-        document.getElementById(id).addEventListener('input', calculate);
+        const el = document.getElementById(id);
+        el.addEventListener('input', calculate);
+        // Auto-select text on click/focus to easily see datalist
+        el.addEventListener('click', function () {
+            this.select();
+        });
+    });
+
+    // Global variable to store stages for navigation
+    let payStagesList = [];
+
+    // Fetch and populate Pay Stages
+    fetch('../data/pay_stages.json')
+        .then(response => response.json())
+        .then(data => {
+            const dataList = document.getElementById('pay-stages');
+            if (dataList && data.payStages) {
+                payStagesList = data.payStages; // Store for smart navigation
+                data.payStages.forEach(stage => {
+                    const option = document.createElement('option');
+                    option.value = stage;
+                    dataList.appendChild(option);
+                });
+            }
+        })
+        .catch(err => console.error('Error loading pay stages:', err));
+
+    // Handle Up/Down Arrow Navigation & Clear-on-Focus (Ghost Value Pattern)
+    const basicPayInput = document.getElementById('basic-pay-in');
+
+    // Store current value to dataset for reference
+    basicPayInput.dataset.lastValid = basicPayInput.value;
+
+    function activateGhostMode() {
+        if (this.value.trim() !== "") {
+            this.dataset.lastValid = this.value;
+            this.placeholder = this.value; // Show value as placeholder
+            this.value = ''; // Clear actual value to show full datalist
+        }
+    }
+
+    function deactivateGhostMode() {
+        if (this.value.trim() === "") {
+            this.value = this.dataset.lastValid; // Restore if nothing selected
+        } else {
+            this.dataset.lastValid = this.value; // Update if new value selected
+        }
+        // Calculate immediately to ensure UI is in sync
+        calculate();
+    }
+
+    basicPayInput.addEventListener('focus', activateGhostMode);
+    basicPayInput.addEventListener('click', activateGhostMode);
+    basicPayInput.addEventListener('blur', deactivateGhostMode);
+
+    basicPayInput.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+            if (payStagesList.length === 0) return;
+
+            e.preventDefault();
+
+            // Use current value or ghost value (stored in dataset)
+            let currentValStr = this.value;
+            if (currentValStr === '') {
+                currentValStr = this.dataset.lastValid || "0";
+            }
+
+            const currentVal = parseInt(currentValStr) || 0;
+
+            let currentIndex = payStagesList.indexOf(currentVal);
+
+            // If not found (custom value), find closest
+            if (currentIndex === -1) {
+                currentIndex = payStagesList.findIndex(val => val >= currentVal);
+                if (currentIndex === -1) currentIndex = payStagesList.length - 1;
+            }
+
+            let nextIndex = currentIndex;
+            if (e.key === 'ArrowUp') {
+                nextIndex = currentIndex + 1;
+            } else {
+                nextIndex = currentIndex - 1;
+            }
+
+            // Boundary checks
+            if (nextIndex >= 0 && nextIndex < payStagesList.length) {
+                this.value = payStagesList[nextIndex];
+                this.dataset.lastValid = this.value; // Update ghost ref
+                calculate(); // Trigger calculation
+            }
+        }
     });
 
     function calculate() {

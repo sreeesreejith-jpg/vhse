@@ -57,6 +57,9 @@
         </div>
     </div>
     <div class="container main-content-padding">
+        <p class="placeholder-message"
+            style="text-align:center; margin:1rem 0; font-weight:500; color:var(--text-muted);">Fill the fields with
+            your own data.</p>
         <main>
             <!-- Section 1: Inputs -->
             <section class="card" id="input-section">
@@ -65,7 +68,8 @@
                     <div class="input-group">
                         <label for="basicPay">Basic Pay (BP)</label>
                         <div class="input-wrapper">
-                            <input type="number" id="basicPay" min="0" step="100">
+                            <input type="number" id="basicPay" min="0" step="100" list="pay-stages" value="60700">
+                            <datalist id="pay-stages"></datalist>
                         </div>
                     </div>
                     <div class="input-group">
@@ -93,9 +97,7 @@
         <footer class="developer-credit">email: sreee.sreejith@gmail.com
 
         </footer>
-        <p class="placeholder-message"
-            style="text-align:center; margin:1rem 0; font-weight:500; color:var(--text-muted);">Fill the fields with
-            your own data.</p>
+
     </div>
     <script src="script.js"></script>
 </body>
