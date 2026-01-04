@@ -1,12 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
     const inputs = document.querySelectorAll('input');
 
+    // Global variable to store stages for navigation
+    let payStagesList = [];
+
     // Fetch and populate Pay Stages
     fetch('../data/pay_stages.json')
         .then(response => response.json())
         .then(data => {
             const dataList = document.getElementById('pay-stages');
             if (dataList && data.payStages) {
+                payStagesList = data.payStages;
                 data.payStages.forEach(stage => {
                     const option = document.createElement('option');
                     option.value = stage;
@@ -18,6 +22,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Earnings Inputs
     const basicPay = document.getElementById('basic-pay');
+
+    // Ghost Mode Logic
+    basicPay.dataset.lastValid = basicPay.value;
+
+    function activateGhostMode() {
+        if (this.value.trim() !== "") {
+            this.dataset.lastValid = this.value;
+            this.placeholder = this.value;
+            this.value = '';
+        }
+    }
+
+    function deactivateGhostMode() {
+        if (this.value.trim() === "") {
+            this.value = this.dataset.lastValid;
+        } else {
+            this.dataset.lastValid = this.value;
+        }
+        this.dispatchEvent(new Event('input'));
+    }
+
+    // Smart Navigation & Auto-List Logic
+    basicPay.addEventListener('focus', activateGhostMode);
+    basicPay.addEventListener('click', activateGhostMode);
+    basicPay.addEventListener('blur', deactivateGhostMode);
+
+    basicPay.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+            if (payStagesList.length === 0) return;
+
+            e.preventDefault();
+
+            let currentValStr = this.value;
+            if (currentValStr === '') {
+                currentValStr = this.dataset.lastValid || "0";
+            }
+
+            const currentVal = parseInt(currentValStr) || 0;
+            let currentIndex = payStagesList.indexOf(currentVal);
+
+            if (currentIndex === -1) {
+                currentIndex = payStagesList.findIndex(val => val >= currentVal);
+                if (currentIndex === -1) currentIndex = payStagesList.length - 1;
+            }
+
+            let nextIndex = currentIndex;
+            if (e.key === 'ArrowUp') {
+                nextIndex = currentIndex + 1;
+            } else {
+                nextIndex = currentIndex - 1;
+            }
+
+            if (nextIndex >= 0 && nextIndex < payStagesList.length) {
+                this.value = payStagesList[nextIndex];
+                this.dataset.lastValid = this.value;
+                this.dispatchEvent(new Event('input'));
+            }
+        }
+    });
     const daPerc = document.getElementById('da-perc');
     const daPendingPerc = document.getElementById('da-pending-perc');
     const hraPerc = document.getElementById('hra-perc');
