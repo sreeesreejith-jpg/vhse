@@ -55,12 +55,15 @@
                 }
 
             } else {
-                // CASE 2: At Home -> EXIT App
-                // Try Capacitor exit method first
+                // CASE 2: At Home -> MINIMIZE App (Native behavior)
                 try {
-                    App.exitApp();
+                    if (App.minimizeApp) {
+                        App.minimizeApp();
+                    } else {
+                        App.exitApp();
+                    }
                 } catch (e) {
-                    console.error("App.exitApp failed:", e);
+                    console.error("Back button exit/minimize failed:", e);
                 }
 
                 // Fallback for older WebView interfaces or if Capacitor fails
