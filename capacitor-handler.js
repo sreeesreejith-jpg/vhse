@@ -1,82 +1,72 @@
 (function () {
     /**
      * Capacitor Hardware Back Button Handler
-     * Refined for robust navigation and app exit.
+     * Optimized for Nithara Apps to ensure Home Screen Exit behavior.
      */
     function setupBackButton() {
-        // Safe access to the Capacitor App plugin
         const App = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
 
-        // If the plugin isn't ready yet, retry after a short delay
         if (!App) {
             setTimeout(setupBackButton, 200);
             return;
         }
 
-        // Remove existing listeners to avoid duplicates
+        // Clean up any old listeners
         if (App.removeAllListeners) {
             App.removeAllListeners();
         }
 
-        // Add custom listener
         App.addListener('backButton', function (data) {
-            // Check if canGoBack is available (mostly for Android)
-            if (data && data.canGoBack) {
-                window.history.back();
-                return;
-            }
-
             const path = window.location.pathname;
+            const href = window.location.href;
 
-            // Define sub-app directories (folder names)
-            // Note: We check if path *ends with* typical home page markers to rule out "Home"
+            // Log for debugging (visible in Android Studio / Chrome Inspect)
+            console.log("Back button pressed. Path:", path);
 
-            // Logic:
-            // If we are deep inside a folder structure, we go UP (../) or to root.
-            // If we are at root ('/', '/index.html', '/nithara/', '/nithara/index.html'), we EXIT.
+            // HOMEPAGE DETECTION
+            // We consider it the home page if:
+            // 1. It's the root path (/)
+            // 2. It ends with index.html but DOES NOT contain any sub-app folder names
+            // 3. It's explicitly the nithara root
+            const subAppFolders = ['salary', 'pay-revision', 'dcrg', 'emi', 'sip', 'housing', 'calculator'];
+            const isSubApp = subAppFolders.some(folder => path.includes('/' + folder + '/'));
 
-            const isHomePage =
-                path.endsWith('/nithara/') ||
-                path.endsWith('/nithara/index.html') ||
-                path === '/' ||
-                path === '/index.html' ||
-                path.includes('index.html') && !path.includes('pay-revision') && !path.includes('salary') && !path.includes('dcrg') && !path.includes('emi') && !path.includes('sip') && !path.includes('housing') && !path.includes('calculator') ||
-                // Handling local file system paths often used in dev/debug APKs
-                path.endsWith('/www/index.html');
+            // If it's not a sub-app, it's likely the home page
+            const isHomePage = !isSubApp;
 
-            if (!isHomePage) {
-                // CASE 1: NOT at Home -> Navigate one level UP
-                // We use history.back() if possible, or force replace to parent
-                if (document.referrer && document.referrer.indexOf(window.location.host) !== -1) {
-                    window.history.back();
-                } else {
-                    // Fallback: Force go to root/home
-                    window.location.replace('../index.html');
-                }
-
-            } else {
-                // CASE 2: At Home -> MINIMIZE App (Native behavior)
+            if (isHomePage) {
+                // CASE: At Home Screen -> Exit/Minimize App
+                console.log("On Home Page, exiting app...");
                 try {
+                    // Try minimize first for better UX, fallback to exit
                     if (App.minimizeApp) {
                         App.minimizeApp();
                     } else {
                         App.exitApp();
                     }
                 } catch (e) {
-                    console.error("Back button exit/minimize failed:", e);
+                    // Native Fallbacks
+                    if (navigator.app && navigator.app.exitApp) {
+                        navigator.app.exitApp();
+                    } else if (navigator.device && navigator.device.exitApp) {
+                        navigator.device.exitApp();
+                    }
                 }
-
-                // Fallback for older WebView interfaces or if Capacitor fails
-                if (navigator.app && navigator.app.exitApp) {
-                    navigator.app.exitApp();
-                } else if (navigator.device && navigator.device.exitApp) {
-                    navigator.device.exitApp();
+            } else {
+                // CASE: Inside a Sub-App -> Navigate Back
+                console.log("Inside Sub-App, navigating back...");
+                // Check if we can go back in history
+                if (window.history.length > 1) {
+                    window.history.back();
+                } else {
+                    // If no history, force redirect to main index
+                    window.location.href = '../index.html';
                 }
             }
         });
     }
 
-    // Initialize
+    // Initialize on load
     if (document.readyState === 'complete') {
         setupBackButton();
     } else {

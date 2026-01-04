@@ -29,7 +29,9 @@ const ASSETS_TO_CACHE = [
     './housing/script.js',
     './sip/index.html',
     './sip/style.css',
-    './sip/script.js'
+    './sip/script.js',
+    // Cache data
+    './data/pay_stages.json'
 ];
 
 // Install Event

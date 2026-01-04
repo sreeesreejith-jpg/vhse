@@ -3,8 +3,10 @@
   "appName": "Nithara Apps",
   "webDir": "www",
   "server": {
-    "url": "https://sreeesreejith-jpg.github.io/nithara/",
-    "allowNavigation": ["sreeesreejith-jpg.github.io"],
+    "url": "https://sreeesreejith-jpg.github.io/vhse/",
+    "allowNavigation": [
+      "sreeesreejith-jpg.github.io"
+    ],
     "cleartext": true
   }
 }
